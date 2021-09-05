@@ -57,15 +57,17 @@ export type ListenersMap = {
     message: Array<Events.WebSocketEventListenerMap['message']>;
     open: Array<Events.WebSocketEventListenerMap['open']>;
     close: Array<Events.WebSocketEventListenerMap['close']>;
+    ping: Array<Events.WebSocketEventListenerMap['ping']>;
 };
 
 export default class ReconnectingWebSocket {
-    private _ws?: WebSocket;
+    private _ws?: Events.MyWebSocket;
     private _listeners: ListenersMap = {
         error: [],
         message: [],
         open: [],
         close: [],
+        ping: [],
     };
     private _retryCount = -1;
     private _uptimeTimeout: any;
@@ -210,6 +212,8 @@ export default class ReconnectingWebSocket {
      * this indicates that the connection is ready to send and receive data
      */
     public onopen: ((event: Event) => void) | null = null;
+
+    public onping: ((event: Event) => void) | null = null;
 
     /**
      * Closes the WebSocket connection or connection attempt, if any. If the connection is already
@@ -467,6 +471,15 @@ export default class ReconnectingWebSocket {
         this._connect();
     };
 
+    private _handlePing = (event: Event) => {
+        this._debug('ping event');
+
+        if (this.onping) {
+            this.onping(event);
+        }
+        this._listeners.ping.forEach(listener => this._callEventListener(event, listener));
+    };
+
     private _handleClose = (event: Events.CloseEvent) => {
         this._debug('close event');
         this._clearTimeouts();
@@ -491,6 +504,7 @@ export default class ReconnectingWebSocket {
         this._ws.removeEventListener('message', this._handleMessage);
         // @ts-ignore
         this._ws.removeEventListener('error', this._handleError);
+        this._ws.off('ping', this._handlePing);
     }
 
     private _addListeners() {
@@ -503,6 +517,7 @@ export default class ReconnectingWebSocket {
         this._ws.addEventListener('message', this._handleMessage);
         // @ts-ignore
         this._ws.addEventListener('error', this._handleError);
+        this._ws.on('ping', this._handlePing);
     }
 
     private _clearTimeouts() {

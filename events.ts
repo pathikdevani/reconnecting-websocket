@@ -32,6 +32,7 @@ export interface WebSocketEventMap {
     error: ErrorEvent;
     message: MessageEvent;
     open: Event;
+    ping: Event;
 }
 
 export interface WebSocketEventListenerMap {
@@ -39,4 +40,9 @@ export interface WebSocketEventListenerMap {
     error: (event: ErrorEvent) => void | {handleEvent: (event: ErrorEvent) => void};
     message: (event: MessageEvent) => void | {handleEvent: (event: MessageEvent) => void};
     open: (event: Event) => void | {handleEvent: (event: Event) => void};
+    ping: (event: Event) => void | {handleEvent: (event: Event) => void};
+}
+export interface MyWebSocket extends WebSocket {
+    on: any;
+    off: any;
 }
